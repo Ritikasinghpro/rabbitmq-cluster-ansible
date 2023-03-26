@@ -1,0 +1,23 @@
+---
+- name: Install firewall
+  dnf:
+    name: firewalld
+    state: present
+    update_cache: true
+
+- name: Enable firewalld service
+  systemd:
+    name: firewalld
+    enabled: true
+    state: started
+
+- name: Enable ports on the list
+  firewalld:
+    zone: public
+    port: "{{ item.port }}"
+    permanent: true
+    state: "{{ item.state }}"
+  loop:
+    "{{ port_list }}"
+  notify:
+  - restart firewalld

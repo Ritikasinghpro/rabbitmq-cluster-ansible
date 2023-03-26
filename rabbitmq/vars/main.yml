@@ -1,6 +1,11 @@
 ---
 # vars file for /etc/ansible/roles/rabbitmq
 
+port_list:
+  - { port: 5672/tcp, state: enabled }
+  - { port: 15672/tcp, state: enabled }
+  - { port: 4369/tcp, state: enabled }
+  - { port: 25672/tcp, state: enabled }
 rabbitmq_erlang_cookie_file: "/var/lib/rabbitmq/.erlang.cookie"
 erlang_url: "https://github.com/rabbitmq/erlang-rpm/releases/download/v25.1/erlang-25.1-1.el8.x86_64.rpm"
 common_project_dir: "/opt"
