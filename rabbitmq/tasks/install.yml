@@ -1,0 +1,44 @@
+---
+- name: Change the hostname to our standard
+  hostname:
+    name="{{ inventory_hostname }}"
+  when:
+    ansible_fqdn != ansible_host
+
+- name: Update /etc/hosts from inventory
+  lineinfile: dest=/etc/hosts regexp='.*{{item}}$' line='{{hostvars[item].ansible_default_ipv4.address}} {{item}}' state=present
+  with_items: '{{groups.all}}'
+
+- name: Copy Repo file with owner and permissions
+  copy:
+    src: files/rabbitmq-server.repo
+    dest: /etc/yum.repos.d/rabbitmq-server.repo
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Download sources
+  get_url: url={{ erlang_url }} dest={{ common_project_dir }}/{{ erlang_file }}
+
+- name: Add Erlang GPG key
+  rpm_key:
+    state: present
+    key: "{{ rpm_erlang_key }}"
+
+- name: Install Erlang
+  yum:
+    name: "{{ common_project_dir }}/{{ erlang_file }}"
+    state: present
+    update_cache: true
+
+- name: Install RabbitMQ package
+  dnf:
+    name: rabbitmq-server
+    state: present
+    update_cache: true
+
+- name: Enable RabbitMQ service
+  systemd:
+    name: rabbitmq-server
+    enabled: true
+    state: started

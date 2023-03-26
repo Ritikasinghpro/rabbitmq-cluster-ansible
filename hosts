@@ -1,0 +1,9 @@
+[node1]
+rabbitmq-master-node ansible_host=xx.xxx.xxx.xxx
+
+[node2]
+rabbitmq-node1 ansible_host=xx.xxx.xxx.xxx
+
+[node3]
+rabbitmq-node2 ansible_host=xx.xxx.xxx.xxx
+

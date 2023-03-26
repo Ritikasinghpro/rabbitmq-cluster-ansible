@@ -1,0 +1,71 @@
+---
+- name: Capturing Erlang Cookie on Master
+  command: "cat {{ rabbitmq_erlang_cookie_file }}"
+  register: rabbitmq_erlang_cookie
+  when: inventory_hostname == "rabbitmq-master-node"
+
+- name: Setting Erlang Cookie of Master node to Non-Master nodes
+  set_fact:
+    rabbitmq_erlang_cookie: "{{ hostvars['rabbit-master']['rabbitmq_erlang_cookie']['stdout'] }}"
+  when: inventory_hostname != "rabbitmq-master-node"
+
+- name: Copy erlang cookie
+  template:
+    src: files/erlang.cookie.j2
+    dest: "{{ rabbitmq_erlang_cookie_file }}"
+    owner: rabbitmq
+    group: rabbitmq
+    mode: 0400
+    # backing up in case the need to recover
+    backup: yes
+  when: inventory_hostname != "rabbitmq-master-node"
+  notify:
+  - restart rabbitmq
+
+- name: Enable rabbitmq_management plugin
+  rabbitmq_plugin:
+    names: rabbitmq_management
+    state: enabled
+    broker_state: offline
+  notify:
+  - restart rabbitmq
+
+- name: Add RabbitMQ dashboard user
+  rabbitmq_user:
+    user: "{{ item }}"
+    password: "{{ ADMIN_PASS }}"
+    tags: administrator,{{item}}
+    vhost: /
+    configure_priv: .*
+    write_priv: .*
+    read_priv: .*
+    state: present
+  with_items:
+  - admin
+
+- name: Stopping RabbitMQ app
+  command: rabbitmqctl stop_app
+
+- name: Resetting RabbitMQ app
+  command: rabbitmqctl reset
+
+- name: Starting RabbitMQ app
+  command: rabbitmqctl start_app
+  when: inventory_hostname == "rabbitmq-master-node"
+
+- name: Joining RabbitMQ node to cluster
+  command: rabbitmqctl join_cluster rabbit@rabbit-master
+  when: inventory_hostname != "rabbitmq-master-node"
+
+- name: Starting RabbitMQ app
+  command: rabbitmqctl start_app
+  when: inventory_hostname != "rabbitmq-master-node"    
+
+- name: Getting cluster_status
+  command: rabbitmqctl cluster_status
+  register: cluster_status
+
+- debug: var=cluster_status.stdout_lines
+
+- name: Setting policy that allows for queues mirroring to all nodes in the cluster
+  command: rabbitmqctl set_policy ha-all "." '{"ha-mode":"all"}'

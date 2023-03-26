@@ -1,0 +1,9 @@
+---
+# vars file for /etc/ansible/roles/rabbitmq
+
+rabbitmq_erlang_cookie_file: "/var/lib/rabbitmq/.erlang.cookie"
+erlang_url: "https://github.com/rabbitmq/erlang-rpm/releases/download/v25.1/erlang-25.1-1.el8.x86_64.rpm"
+common_project_dir: "/opt"
+erlang_file: "erlang-25.1-1.el8.x86_64.rpm"
+ADMIN_PASS: "admin@123"
+rpm_erlang_key: "https://dl.cloudsmith.io/public/rabbitmq/rabbitmq-erlang/gpg.E495BB49CC4BBE5B.key"
